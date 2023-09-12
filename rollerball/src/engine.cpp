@@ -35,7 +35,7 @@ void Engine::find_best_move(const Board& b) {
     // }
     this->best_move = 0;
     Board* n = b.copy();
-    this->best_move = minimax(*n,4).first;
+    this->best_move = minimax(*n,5,-1,1).first;
     std::cout << "exiting with move" << best_move<< "\n";
 }
 
@@ -56,12 +56,20 @@ if(b.data.w_pawn_ws == DEAD) score -= 10;
 if(b.data.w_rook_bs == DEAD) score -= 30;
 if(b.data.w_rook_ws == DEAD) score -= 30;
 
-if (b.data.player_to_play == BLACK) score = score * -1;
+if(b.in_check()){
+    if(b.data.player_to_play == BLACK){
+        score += 100;
+    }
+    else{
+        score -= 100;
+    }
+
+}
+
 return score;
 }
 
-std::pair<int,int> Engine::minimax(Board& b,int depth_of_search){
-
+std::pair<int,int> Engine::minimax(Board& b,int depth_of_search,int alpha,int beta){
 
 if (depth_of_search == 0){
 
@@ -69,13 +77,22 @@ if (depth_of_search == 0){
 }
 auto moveset = b.get_legal_moves();
     if (moveset.size() == 0) {
-        this->best_move = 0;
+
+        if (b.data.player_to_play == BLACK){
+        return std::make_pair(0,300);
+        }
+        else{
+            return std::make_pair(0,-300);
+        }
     }
 //std::random_shuffle(moveset.begin(),moveset.end());
 int auxillary;
 int best_score = -1;
 std::pair<int,int> rvalue;
 for(auto m:moveset){
+    if(alpha >= beta && alpha != -1 && beta != 1){
+        break;
+    }
     if(search ==false){
         std::cout << "exiting function"<< best_move<< "\n";
 
@@ -83,11 +100,26 @@ for(auto m:moveset){
     }
     b.do_move(m);
     
-    auxillary = minimax(b,depth_of_search - 1).second;
+    auxillary = minimax(b,depth_of_search - 1,alpha,beta).second;
+    if (b.data.player_to_play == BLACK){
     if (auxillary > best_score || best_score == -1){
         best_score = auxillary;
        rvalue.first = m;
        rvalue.second = best_score;
+    }
+    if (auxillary > alpha||alpha == -1){
+        alpha = auxillary;
+    }
+    }
+    else{
+      if (auxillary < best_score || best_score == -1){
+        best_score = auxillary;
+       rvalue.first = m;
+       rvalue.second = best_score;
+    }
+    if(auxillary < beta || beta == 1){
+        beta = auxillary;
+    }  
     }
     b.undo_move(m);
      if(search ==false){
