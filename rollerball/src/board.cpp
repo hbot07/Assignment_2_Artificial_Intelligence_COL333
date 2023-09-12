@@ -170,6 +170,11 @@ std::unordered_set<U16> construct_bottom_bishop_moves_with_board(const U8 p0, co
     else if (p0 == 10) {
         p1s.push_back(pos(1,0));
         p1s.push_back(pos(0,1));
+        p1s.push_back(pos(1,2));
+        p1s.push_back(pos(0,3));
+        p1s.push_back(pos(1,4));
+        p1s.push_back(pos(2,5));
+        p1s.push_back(pos(3,6));
     }
     else if (p0 == 11) {
         p1s.push_back(pos(2,0));
