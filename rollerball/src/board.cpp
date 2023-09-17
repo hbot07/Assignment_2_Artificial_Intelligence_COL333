@@ -401,6 +401,7 @@ void rotate_board(U8 *src, U8 *tgt, const U8 *transform) {
 
 Board::Board(): data{} {
     this->num_moves = 0;
+    this->score = 0;
     this->data.board_0[this->data.b_rook_ws]  = BLACK | ROOK;
     this->data.board_0[this->data.b_rook_bs]  = BLACK | ROOK;
     this->data.board_0[this->data.b_king   ]  = BLACK | KING;
@@ -550,6 +551,18 @@ void Board::_do_move(U16 move) {
             pieces[i] = DEAD;
             this->data.last_killed_piece = this->data.board_0[p1];
             this->data.last_killed_piece_idx = i;
+            U8 name = data.last_killed_piece & 15;
+            U8 colour = data.last_killed_piece & 96;
+            int score1 = 0;
+            if (name == ROOK){
+                score1 = 3;
+            }
+            if(name == BISHOP){
+                score1 = 5;
+            }
+            if(name == PAWN){
+                
+            }
         }
         if (pieces[i] == p0) {
             pieces[i] = p1;

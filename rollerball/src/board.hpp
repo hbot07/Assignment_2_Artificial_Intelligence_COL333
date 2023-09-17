@@ -78,6 +78,7 @@ struct Board {
    void do_move(U16 move);
     void undo_move(U16 move);
     int num_moves;
+    short score;
     private:
     std::unordered_set<U16> _get_pseudolegal_moves() const;
     std::unordered_set<U16> _get_pseudolegal_moves_for_piece(U8 piece_pos) const;
