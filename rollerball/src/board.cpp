@@ -400,7 +400,7 @@ void rotate_board(U8 *src, U8 *tgt, const U8 *transform) {
 }
 
 Board::Board(): data{} {
-
+    this->num_moves = 0;
     this->data.board_0[this->data.b_rook_ws]  = BLACK | ROOK;
     this->data.board_0[this->data.b_rook_bs]  = BLACK | ROOK;
     this->data.board_0[this->data.b_king   ]  = BLACK | KING;
@@ -522,10 +522,12 @@ std::unordered_set<U16> Board::get_legal_moves() const {
 void Board::do_move(U16 move) {
     _do_move(move);
     _flip_player();
+    this->num_moves += 1;
 }
  void Board::undo_move(U16 move) {
     _undo_last_move(move);
     _flip_player();
+    this->num_moves -=1;
 }
 void Board::_flip_player() {
     this->data.player_to_play = (PlayerColor)(this->data.player_to_play ^ (WHITE | BLACK));
