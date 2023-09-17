@@ -35,39 +35,27 @@ void Engine::find_best_move(const Board& b) {
     // }
     this->best_move = 0;
     Board* n = b.copy();
-    this->best_move = minimax(*n,5,-1,1).first;
+    this->best_move = minimax(*n,7,-1,1).first;
     std::cout << "exiting with move" << best_move<< "\n";
 }
 
 int Engine::find_score( Board& b){
 
-int score = 0;
-if(b.data.b_bishop == DEAD) score += 7;
-if(b.data.b_king == DEAD) score += 7;
-if(b.data.b_pawn_bs == DEAD) score += 1;
-if(b.data.b_pawn_ws == DEAD) score += 1;
-if(b.data.b_rook_bs == DEAD) score += 3;
-if(b.data.b_rook_ws == DEAD) score += 3;
+short score = b.static_score;
 
-if(b.data.w_bishop == DEAD) score -= 7;
-if(b.data.w_king == DEAD) score -= 7;
-if(b.data.w_pawn_bs == DEAD) score -= 1;
-if(b.data.w_pawn_ws == DEAD) score -= 1;
-if(b.data.w_rook_bs == DEAD) score -= 3;
-if(b.data.w_rook_ws == DEAD) score -= 3;
 if(b.data.player_to_play == BLACK){
-        score += int(0.5*b.num_moves);
+        score += int(0.3*b.num_moves);
     }
     else{
-        score -= int(0.5*b.num_moves);
+        score -= int(0.3*b.num_moves);
     }
 
 if(b.in_check()){
     if(b.data.player_to_play == BLACK){
-        score += 10;
+        score += 2;
     }
     else{
-        score -= 10;
+        score -= 2;
     }
 
 }
@@ -102,7 +90,7 @@ std::pair<int,int> Engine::minimax(Board& b,int depth_of_search,int alpha,int be
 
 if (depth_of_search == 0){
      if(b.in_check()){
-        return minimax(b,3,alpha,beta);
+        return minimax(b,2,alpha,beta);
 }
     return std::make_pair(0,this->find_score(b));
 }
@@ -110,10 +98,10 @@ auto moveset = b.get_legal_moves();
     if (moveset.size() == 0) {
 
         if (b.data.player_to_play == BLACK){
-        return std::make_pair(0,30);
+        return std::make_pair(0,35);
         }
         else{
-            return std::make_pair(0,-30);
+            return std::make_pair(0,-35);
         }
     }
 std::vector<std::pair<short,U16>>  auxillary;
@@ -121,10 +109,10 @@ this->order_Nodes(b,b.data.player_to_play,&moveset,&auxillary);
 //std::random_shuffle(moveset.begin(),moveset.end());
 int auxill;
 if(b.data.player_to_play== BLACK){
-    auxill = int((-0.5)* moveset.size());
+    auxill = int((-0.2)* moveset.size());
 }
 else{
-    auxill = int((0.5)*moveset.size());
+    auxill = int((0.2)*moveset.size());
 }
 int best_score = -1;
 std::pair<int,int> rvalue;
@@ -144,7 +132,7 @@ for(long unsigned int x = 0;x < auxillary.size();x++ ){
     if (auxill > alpha||alpha == -1){
         alpha = auxill;
     }
-    auxill = int((-0.3)*moveset.size());
+    auxill = int((-0.2)*moveset.size());
     }
     else{
       if (auxill < best_score || best_score == -1){
@@ -155,7 +143,7 @@ for(long unsigned int x = 0;x < auxillary.size();x++ ){
     if(auxill < beta || beta == 1){
         beta = auxill;
     }  
-    auxill = int((0.3)*moveset.size());
+    auxill = int((0.2)*moveset.size());
     }
     b.undo_move(auxillary[x].second);
     

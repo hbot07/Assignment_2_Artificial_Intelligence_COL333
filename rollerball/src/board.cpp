@@ -401,7 +401,8 @@ void rotate_board(U8 *src, U8 *tgt, const U8 *transform) {
 
 Board::Board(): data{} {
     this->num_moves = 0;
-    this->score = 0;
+    this->move_score = 0;
+    this->static_score = 0;
     this->data.board_0[this->data.b_rook_ws]  = BLACK | ROOK;
     this->data.board_0[this->data.b_rook_bs]  = BLACK | ROOK;
     this->data.board_0[this->data.b_king   ]  = BLACK | KING;
@@ -535,7 +536,7 @@ void Board::_flip_player() {
 }
 
 void Board::_do_move(U16 move) {
-
+    this-> move_score = 0;
     U8 p0 = getp0(move);
     U8 p1 = getp1(move);
     U8 promo = getpromo(move);
@@ -553,15 +554,21 @@ void Board::_do_move(U16 move) {
             this->data.last_killed_piece_idx = i;
             U8 name = data.last_killed_piece & 15;
             U8 colour = data.last_killed_piece & 96;
-            int score1 = 0;
+            short score1 = 0;
             if (name == ROOK){
-                score1 = 3;
+                score1 = 6;
             }
             if(name == BISHOP){
-                score1 = 5;
+                score1 = 12;
             }
             if(name == PAWN){
-                
+                score1 = 2;
+            }
+            if (colour == BLACK){
+                this->static_score += score1;
+            }
+            else{
+                this->static_score -= score1;
             }
         }
         if (pieces[i] == p0) {
@@ -580,7 +587,29 @@ void Board::_do_move(U16 move) {
     this->data.board_90[cw_90[p1]]   = piecetype;
     this->data.board_180[cw_180[p1]] = piecetype;
     this->data.board_270[acw_90[p1]] = piecetype;
+/*    if(this->_under_threat(p1)){
+        U8 name = piecetype & 15;
+        U8 colour = piecetype & 96;
+        short score1 = 0;
+            if (name == ROOK){
+                score1 = 3;
+            }
+            if(name == BISHOP){
+                score1 = 5;
+            }
+            if(name == PAWN){
+                score1 = 1;
+            }
+            if (colour == BLACK){
+                this->move_score = this->static_score + score1;
+            }
+            else{
+                this->move_score = this->static_score - score1;
+            }
 
+
+    }
+*/
     this->data.board_0[p0]           = 0;
     this->data.board_90[cw_90[p0]]   = 0;
     this->data.board_180[cw_180[p0]] = 0;
@@ -629,7 +658,24 @@ void Board::_undo_last_move(U16 move) {
     this->data.board_90[cw_90[p1]]   = deadpiece;
     this->data.board_180[cw_180[p1]] = deadpiece;
     this->data.board_270[acw_90[p1]] = deadpiece;
-
+            U8 name = deadpiece & 15;
+            U8 colour = deadpiece & 96;
+            short score1 = 0;
+            if (name == ROOK){
+                score1 = 6;
+            }
+            if(name == BISHOP){
+                score1 = 12;
+            }
+            if(name == PAWN){
+                score1 = 2;
+            }
+            if (colour == BLACK){
+                this->static_score -= score1;
+            }
+            else{
+                this->static_score += score1;
+            }
     // std::cout << "Undid last move\n";
     // std::cout << all_boards_to_str(*this);
 }
