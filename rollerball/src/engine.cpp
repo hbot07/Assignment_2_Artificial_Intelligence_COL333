@@ -68,22 +68,26 @@ int evaluate(const Board &b) {
     int score = 0;
 
     // Material count
-    for (int i = 0; i < 64; i++) {
-        U8 piece = b.data.board_0[i];
+    for (int i = 0; i < 7; i++) {
+        for (int j = 0;j < 7;j++){
+            if(i >=2 && i <= 4 && j >= 2 &&j<= 4){
+                continue;
+            }
+        U8 piece = b.data.board_0[8*i + j];
         switch (piece & ~PlayerColor::WHITE & ~PlayerColor::BLACK) {
             case PieceType::PAWN:
-                score += (piece & PlayerColor::WHITE) ? PAWN_VALUE + PAWN_SQUARE_TABLE[i] : -PAWN_VALUE - PAWN_SQUARE_TABLE[i];
+                score += (piece & PlayerColor::WHITE) ? PAWN_VALUE + PAWN_SQUARE_TABLE[8*i + j] : -PAWN_VALUE - PAWN_SQUARE_TABLE[8*i + j];
                 break;
             case PieceType::ROOK:
-                score += (piece & PlayerColor::WHITE) ? ROOK_VALUE + ROOK_SQUARE_TABLE[i] : -ROOK_VALUE - ROOK_SQUARE_TABLE[i];
+                score += (piece & PlayerColor::WHITE) ? ROOK_VALUE + ROOK_SQUARE_TABLE[8*i + j] : -ROOK_VALUE - ROOK_SQUARE_TABLE[8*i +j];
                 break;
             case PieceType::KING:
-                score += (piece & PlayerColor::WHITE) ? KING_VALUE + KING_SQUARE_TABLE[i] : -KING_VALUE - KING_SQUARE_TABLE[i];
+                score += (piece & PlayerColor::WHITE) ? KING_VALUE + KING_SQUARE_TABLE[8*i + j] : -KING_VALUE - KING_SQUARE_TABLE[8*i + j];
                 break;
             case PieceType::BISHOP:
-                score += (piece & PlayerColor::WHITE) ? BISHOP_VALUE + BISHOP_SQUARE_TABLE[i] : -BISHOP_VALUE - BISHOP_SQUARE_TABLE[i];
+                score += (piece & PlayerColor::WHITE) ? BISHOP_VALUE + BISHOP_SQUARE_TABLE[8*i + j] : -BISHOP_VALUE - BISHOP_SQUARE_TABLE[8*i +j];
                 break;
-        }
+        }}
     }
 
     // Check and Checkmate
@@ -103,22 +107,29 @@ int evaluate(const Board &b) {
 
 // The recursive minimax function with alpha-beta pruning
 int Engine::minimax(const Board &b, int depth, bool isMaximizingPlayer, int alpha, int beta) {
-    if (depth == 0 || search == false) {
+    if (depth == 0 ) {
         return evaluate(b);
     }
     Board newBoard = *b.copy();
 
     auto moves = b.get_legal_moves();
-
+   std::vector<U16> moveset;
+     std::sample(
+            moves.begin(),
+            moves.end(),
+            std::back_inserter(moveset),
+            1,
+            std::mt19937{std::random_device{}()}
+        );
     if (isMaximizingPlayer) {
         int maxEval = NEG_INF;
-        for (auto m : moves) {
+        for (int i = 0;i < moveset.size();i++) {
            //Board newBoard = *b.copy();
-            newBoard.do_move(m);
+            newBoard.do_move(moveset[i]);
             int eval = minimax(newBoard, depth - 1, false, alpha, beta);
             maxEval = std::max(maxEval, eval);
             alpha = std::max(alpha, eval);
-            newBoard.undo_move(m);
+            newBoard.undo_move(moveset[i]);
             if (beta <= alpha) {
                 break;  // beta cutoff
             }
@@ -126,13 +137,13 @@ int Engine::minimax(const Board &b, int depth, bool isMaximizingPlayer, int alph
         return maxEval;
     } else {
         int minEval = INF;
-        for (auto m : moves) {
+        for (int i =0;i < moveset.size();i++) {
             //Board newBoard = *b.copy();
-            newBoard.do_move(m);
+            newBoard.do_move(moveset[i]);
             int eval = minimax(newBoard, depth - 1, true, alpha, beta);
             minEval = std::min(minEval, eval);
             beta = std::min(beta, eval);
-            newBoard.undo_move(m);
+            newBoard.undo_move(moveset[i]);
             if (beta <= alpha) {
                 break;  // alpha cutoff
             }
@@ -148,6 +159,14 @@ void Engine::find_best_move(const Board& b) {
         this->best_move = 0;
         return;
     }
+    std::vector<U16> moveset;
+     std::sample(
+            moves.begin(),
+            moves.end(),
+            std::back_inserter(moveset),
+            1,
+            std::mt19937{std::random_device{}()}
+        );
     int bestValue;
     // Minimax initialization
     bool is_white = false;
@@ -157,24 +176,25 @@ void Engine::find_best_move(const Board& b) {
     else{bestValue = INF;}
     U16 bestMove = 0;
     Board newBoard = *b.copy();
-    for (auto m : moves) {
+
+    for (int i = 0;i < moveset.size();i++) {
        
-        newBoard.do_move(m);
+        newBoard.do_move(moveset[i]);
         
         if (is_white){
         int moveValue = minimax(newBoard, 3, false, NEG_INF, INF);  // assuming depth 3 for now, you can change as needed
         if (moveValue > bestValue) {
             bestValue = moveValue;
-            bestMove = m;
+            bestMove = moveset[i];
         }}
         else{
         int moveValue = minimax(newBoard, 3, true, NEG_INF, INF);  // assuming depth 3 for now, you can change as needed
          if (moveValue < bestValue) {
             bestValue = moveValue;
-            bestMove = m;
+            bestMove = moveset[i];
         }   
         }
-        newBoard.undo_move(m);
+        newBoard.undo_move(moveset[i]);
     }
 
     this->best_move = bestMove;
