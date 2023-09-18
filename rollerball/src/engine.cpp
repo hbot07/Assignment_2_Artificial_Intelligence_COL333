@@ -107,44 +107,54 @@ const short BISHOP_SQUARE_TABLE[64] = {
 
 // The recursive minimax function with alpha-beta pruning
 int Engine::minimax(const Board &b, int depth, bool isMaximizingPlayer, int alpha, int beta) {
-    if (depth == 0 ) {
-        std::cout << "score from board"<< b.data.score << "\n";
-        std::cout  << "actual score"<< evaluate(b)<<"\n";
-        return evaluate(b);
+    if (depth == 0 ||search == false ) {
+         return b.data.score;
     }
   //  Board newBoard = *b.copy();
-
+    Board newBoard = *(b.copy());
     auto moves = b.get_legal_moves();
-   std::vector<U16> moveset;
-    for(auto m:moves){
-        moveset.push_back(m);
-    }
-   std::srand(time(NULL));
-    std::random_shuffle(std::begin(moveset), std::end(moveset));
+     std::vector<std::pair<int, U16>> movesorted;
+   //std::vector<U16> moveset;
+    //for(auto m:moves){
+      //  moveset.push_back(m);
+    //}
+   //std::srand(time(NULL));
+    //std::random_shuffle(std::begin(moveset), std::end(moveset));
     if (isMaximizingPlayer) {
+       
+       for (auto m:moves){
+        newBoard.do_move(m);
+        movesorted.push_back(std::make_pair(-1*newBoard.data.score,m));
+        newBoard.undo_move(m);
+       }
+       std::sort(movesorted.begin(),movesorted.end());
         int maxEval = NEG_INF;
-        for (long unsigned int i = 0;i < moveset.size();i++) {
-            Board newBoard = *b.copy();
-            newBoard.do_move(moveset[i]);
+        for (long unsigned int i = 0;i < movesorted.size();i++) {
+            newBoard.do_move(movesorted[i].second);
             int eval = minimax(newBoard, depth - 1, false, alpha, beta);
             maxEval = std::max(maxEval, eval);
             alpha = std::max(alpha, eval);
-           // newBoard.undo_move(moveset[i]);
-            if (beta <= alpha) {
+           newBoard.undo_move(movesorted[i].second);
+            if (beta <= alpha||search == false) {
                 break;  // beta cutoff
             }
         }
         return maxEval;
     } else {
+         for (auto m:moves){
+        newBoard.do_move(m);
+        movesorted.push_back(std::make_pair(newBoard.data.score,m));
+        newBoard.undo_move(m);
+       }
+       std::sort(movesorted.begin(),movesorted.end());
         int minEval = INF;
-        for (long unsigned int i =0;i < moveset.size();i++) {
-            Board newBoard = *b.copy();
-            newBoard.do_move(moveset[i]);
+        for (long unsigned int i = 0;i < movesorted.size();i++) {
+            newBoard.do_move(movesorted[i].second);
             int eval = minimax(newBoard, depth - 1, true, alpha, beta);
             minEval = std::min(minEval, eval);
             beta = std::min(beta, eval);
-           // newBoard.undo_move(moveset[i]);
-            if (beta <= alpha) {
+           newBoard.undo_move(movesorted[i].second);
+            if (beta <= alpha||search == false) {
                 break;  // alpha cutoff
             }
         }
@@ -173,25 +183,32 @@ void Engine::find_best_move(const Board& b) {
     bestValue = NEG_INF;}
     else{bestValue = INF;}
     U16 bestMove = 0;
+      Board newBoard  = *(b.copy());
+      std::vector<std::pair<int, U16>> movesorted;
+       for (auto m:moves){
+        newBoard.do_move(m);
+        movesorted.push_back(std::make_pair(-1*(newBoard.data.score),m));
+        newBoard.undo_move(m);
+       }
+    std::sort(movesorted.begin(),movesorted.end());
 
-
-    for (long unsigned int i = 0;i < moveset.size();i++) {
-        Board newBoard = *b.copy();
-        newBoard.do_move(moveset[i]);
+    for (long unsigned int i = 0;i < movesorted.size();i++) {
+        newBoard.do_move(movesorted[i].second);
         
         if (is_white){
         int moveValue = minimax(newBoard, 3, false, NEG_INF, INF);  // assuming depth 3 for now, you can change as needed
         if (moveValue > bestValue) {
             bestValue = moveValue;
-            bestMove = moveset[i];
+            bestMove = movesorted[i].second;
         }}
         else{
         int moveValue = minimax(newBoard, 3, true, NEG_INF, INF);  // assuming depth 3 for now, you can change as needed
          if (moveValue < bestValue) {
             bestValue = moveValue;
-            bestMove = moveset[i];
+            bestMove = movesorted[i].second;
         }   
         }
+        newBoard.undo_move(movesorted[i].second);
     }
  
     this->best_move = bestMove;

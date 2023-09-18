@@ -623,24 +623,24 @@ int Board::get_added_score(U8 p0,U8 p1,U8 piecetype,U8 deadpiece,U8 promo){
     int added = 0;
     switch (piecetype & ~PlayerColor::WHITE & ~PlayerColor::BLACK) {
             case PieceType::PAWN:
-                added += (piecetype & PlayerColor::WHITE) ? PAWN_VALUE + PAWN_SQUARE_TABLE[p1] -  PAWN_SQUARE_TABLE[p0] : PAWN_SQUARE_TABLE[p0] -PAWN_VALUE - PAWN_SQUARE_TABLE[p1];
+                added += (piecetype & PlayerColor::WHITE) ? PAWN_SQUARE_TABLE[p1] -  PAWN_SQUARE_TABLE[p0] : PAWN_SQUARE_TABLE[p0] - PAWN_SQUARE_TABLE[p1];
                 if (promo == PAWN_ROOK){
-                     added += (piecetype & PlayerColor::WHITE) ? ROOK_VALUE + ROOK_SQUARE_TABLE[p1] : -ROOK_VALUE - ROOK_SQUARE_TABLE[p1];
+                     added += (piecetype & PlayerColor::WHITE) ? ROOK_VALUE + ROOK_SQUARE_TABLE[p1]- PAWN_VALUE : -ROOK_VALUE - ROOK_SQUARE_TABLE[p1]+PAWN_VALUE;
                      break;
                 } 
                 if(promo == PAWN_BISHOP){
-                    added += (piecetype & PlayerColor::WHITE) ? BISHOP_VALUE + BISHOP_SQUARE_TABLE[p1]:-BISHOP_VALUE - BISHOP_SQUARE_TABLE[p1];
+                    added += (piecetype & PlayerColor::WHITE) ? BISHOP_VALUE + BISHOP_SQUARE_TABLE[p1]- PAWN_VALUE:-BISHOP_VALUE - BISHOP_SQUARE_TABLE[p1]+PAWN_VALUE;
                     break;
                 }
                 break;
             case PieceType::ROOK:
-                added += (piecetype & PlayerColor::WHITE) ? ROOK_VALUE + ROOK_SQUARE_TABLE[p1] - ROOK_SQUARE_TABLE[p0]: ROOK_SQUARE_TABLE[p0]-ROOK_VALUE - ROOK_SQUARE_TABLE[p1];
+                added += (piecetype & PlayerColor::WHITE) ? ROOK_SQUARE_TABLE[p1] - ROOK_SQUARE_TABLE[p0]: ROOK_SQUARE_TABLE[p0]- ROOK_SQUARE_TABLE[p1];
                 break;
             case PieceType::KING:
-                added += (piecetype & PlayerColor::WHITE) ? KING_VALUE + KING_SQUARE_TABLE[p1] - KING_SQUARE_TABLE[p0] : KING_SQUARE_TABLE[p0]-KING_VALUE - KING_SQUARE_TABLE[p1];
+                added += (piecetype & PlayerColor::WHITE) ? KING_SQUARE_TABLE[p1] - KING_SQUARE_TABLE[p0] : KING_SQUARE_TABLE[p0] - KING_SQUARE_TABLE[p1];
                 break;
             case PieceType::BISHOP:
-                added += (piecetype & PlayerColor::WHITE) ? BISHOP_VALUE + BISHOP_SQUARE_TABLE[p1] - BISHOP_SQUARE_TABLE[p0]: BISHOP_SQUARE_TABLE[p0]-BISHOP_VALUE - BISHOP_SQUARE_TABLE[p1];
+                added += (piecetype & PlayerColor::WHITE) ?  BISHOP_SQUARE_TABLE[p1] - BISHOP_SQUARE_TABLE[p0]: BISHOP_SQUARE_TABLE[p0] - BISHOP_SQUARE_TABLE[p1];
                 break;
         }
     switch (deadpiece & ~PlayerColor::WHITE & ~PlayerColor::BLACK) {
@@ -682,7 +682,8 @@ void Board::_do_move(U16 move) {
             pieces[i] = p1;
         }
     }
-    int added_score = this->get_added_score(p0,p1,piecetype,this->data.last_killed_piece,promo);
+    int added_score = this->get_added_score(p0,p1,piecetype,this->data.last_killed_piece,promo); 
+    this->data.last_added_score = added_score; 
     this->data.score += added_score;
     if (promo == PAWN_ROOK) {
         piecetype = (piecetype & (WHITE | BLACK)) | ROOK;
@@ -727,7 +728,7 @@ void Board::_undo_last_move(U16 move) {
         pieces[this->data.last_killed_piece_idx] = p1;
         this->data.last_killed_piece_idx = -1;
     }
-
+    this->data.score -= this->data.last_added_score;
     if (promo == PAWN_ROOK) {
         piecetype = (piecetype & (WHITE | BLACK)) | ROOK;
     }

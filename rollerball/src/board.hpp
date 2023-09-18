@@ -64,6 +64,7 @@ struct BoardData {
     U8 last_killed_piece = 0;
     int last_killed_piece_idx = -1;
     int score = 0;
+    int last_added_score = 0;
 };
 
 struct Board {
