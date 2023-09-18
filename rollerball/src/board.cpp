@@ -3,6 +3,93 @@
 #include "board.hpp"
 #include <cstring>
 
+const short PAWN_VALUE   = 10;
+const short ROOK_VALUE   = 50;
+const short KING_VALUE   = 900; // This might be arbitrary since the game is over if the King is captured, but for evaluation purposes, it has a high value.
+const short BISHOP_VALUE = 30;
+
+
+const short PAWN_SQUARE_TABLE[64] = {
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 1, 2, 3, 5, 5, 5, 5,
+        1, 1, 2, 3, 3, 2, 1, 1,
+        0, 0, 1, 2, 2, 1, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+        1, 1, 1, -2, -2, 1, 1, 1,
+        1, 2, 2, -4, -4, 2, 2, 1,
+        0, 0, 0, 0, 0, 0, 0, 0
+};
+
+const short ROOK_SQUARE_TABLE[64] = {
+        0, 0, 0, 0, 0, 0, 0, 0,
+        14, 10, 10, 10, 10, 5, 5, 5,
+        12, 12, 10, 10, 10, 5, 5, 5,
+        11, 11, 10, 10, 10, 5, 5, 5,
+        10, 10, 10, 10, 10, 5, 5, 5,
+        10, 9, 7, 6, 5, 6, 3, 5,
+        8, 7, 6, 5, 4, 5, 5, 5,
+        0, 0, 0, 5, 5, 0, 0, 0
+};
+
+const short KING_SQUARE_TABLE[64] = {
+        20, 30, 10, 0, 0, 10, 30, 20,
+        20, 20, 0, 0, 0, 0, 20, 20,
+        -10, -20, -20, -20, -20, -20, -20, -10,
+        -10, -20, -20, -20, -20, -20, -20, -10,
+        -20, -30, -30, -40, -40, -30, -30, -20,
+        -30, -40, -40, -50, -50, -40, -40, -30,
+        -30, -40, -40, -50, -50, -40, -40, -30,
+        0, 0, 0, 0, 0, 0, 0, 0
+};
+
+const short BISHOP_SQUARE_TABLE[64] = {
+        10, 10, 4, 4, 4, 6, 7, 0,
+        10, 10, 10, 10, 10, 3, 4, 5,
+        10, 10, 10, 10, 10, 3, 4, 5,
+        10, 10, 10, 10, 10, 3, 4, 5,
+        10, 10, 10, 10, 10, 3, 4, 5,
+        10, 10, 7, 6, 5, 4, 3, 4,
+        10, 10, 10, 10, 10, 3, 4, 5,
+        0, 0, 0, 5, 5, 0, 0, 0
+};
+
+int evaluate(const Board &b) {
+    int score = 0;
+
+    // Material count
+    for (int i = 0; i < 7; i++) {
+        for (int j = 0;j < 7;j++){
+            if(i >=2 && i <= 4 && j >= 2 &&j<= 4){
+                continue;
+            }
+        U8 piece = b.data.board_0[8*i + j];
+        switch (piece & ~PlayerColor::WHITE & ~PlayerColor::BLACK) {
+            case PieceType::PAWN:
+                score += (piece & PlayerColor::WHITE) ? PAWN_VALUE + PAWN_SQUARE_TABLE[8*i + j] : -PAWN_VALUE - PAWN_SQUARE_TABLE[8*i + j];
+                break;
+            case PieceType::ROOK:
+                score += (piece & PlayerColor::WHITE) ? ROOK_VALUE + ROOK_SQUARE_TABLE[8*i + j] : -ROOK_VALUE - ROOK_SQUARE_TABLE[8*i +j];
+                break;
+            case PieceType::KING:
+                score += (piece & PlayerColor::WHITE) ? KING_VALUE + KING_SQUARE_TABLE[8*i + j] : -KING_VALUE - KING_SQUARE_TABLE[8*i + j];
+                break;
+            case PieceType::BISHOP:
+                score += (piece & PlayerColor::WHITE) ? BISHOP_VALUE + BISHOP_SQUARE_TABLE[8*i + j] : -BISHOP_VALUE - BISHOP_SQUARE_TABLE[8*i +j];
+                break;
+        }}
+    }
+    if (b.in_check()) {
+        score += (b.data.player_to_play == PlayerColor::WHITE) ? -100 : 100;  // If white is in check, subtract value. If black is in check, add value.
+    }
+    // Note: Check for checkmate can be added as well but you haven't provided a function to determine checkmate.
+    // For instance:
+    // if (b.is_checkmate()) {
+    //     score += (b.data.player_to_play == PlayerColor::WHITE) ? -1000 : 1000;
+    // }
+
+    return score;
+}
+
 constexpr U8 cw_90[64] = {
     48, 40, 32, 24, 16, 8,  0,  7,
     49, 41, 33, 25, 17, 9,  1,  15,
@@ -414,6 +501,7 @@ Board::Board(): data{} {
     this->data.board_0[this->data.w_bishop ]  = WHITE | BISHOP;
     this->data.board_0[this->data.w_pawn_ws]  = WHITE | PAWN;
     this->data.board_0[this->data.w_pawn_bs]  = WHITE | PAWN;
+    this->data.score = evaluate((*this));
 
     rotate_board(this->data.board_0, this->data.board_90, cw_90);
     rotate_board(this->data.board_0, this->data.board_180, cw_180);
@@ -531,6 +619,47 @@ void Board::_flip_player() {
     this->data.player_to_play = (PlayerColor)(this->data.player_to_play ^ (WHITE | BLACK));
 }
 
+int Board::get_added_score(U8 p0,U8 p1,U8 piecetype,U8 deadpiece,U8 promo){
+    int added = 0;
+    switch (piecetype & ~PlayerColor::WHITE & ~PlayerColor::BLACK) {
+            case PieceType::PAWN:
+                added += (piecetype & PlayerColor::WHITE) ? PAWN_VALUE + PAWN_SQUARE_TABLE[p1] -  PAWN_SQUARE_TABLE[p0] : PAWN_SQUARE_TABLE[p0] -PAWN_VALUE - PAWN_SQUARE_TABLE[p1];
+                if (promo == PAWN_ROOK){
+                     added += (piecetype & PlayerColor::WHITE) ? ROOK_VALUE + ROOK_SQUARE_TABLE[p1] : -ROOK_VALUE - ROOK_SQUARE_TABLE[p1];
+                     break;
+                } 
+                if(promo == PAWN_BISHOP){
+                    added += (piecetype & PlayerColor::WHITE) ? BISHOP_VALUE + BISHOP_SQUARE_TABLE[p1]:-BISHOP_VALUE - BISHOP_SQUARE_TABLE[p1];
+                    break;
+                }
+                break;
+            case PieceType::ROOK:
+                added += (piecetype & PlayerColor::WHITE) ? ROOK_VALUE + ROOK_SQUARE_TABLE[p1] - ROOK_SQUARE_TABLE[p0]: ROOK_SQUARE_TABLE[p0]-ROOK_VALUE - ROOK_SQUARE_TABLE[p1];
+                break;
+            case PieceType::KING:
+                added += (piecetype & PlayerColor::WHITE) ? KING_VALUE + KING_SQUARE_TABLE[p1] - KING_SQUARE_TABLE[p0] : KING_SQUARE_TABLE[p0]-KING_VALUE - KING_SQUARE_TABLE[p1];
+                break;
+            case PieceType::BISHOP:
+                added += (piecetype & PlayerColor::WHITE) ? BISHOP_VALUE + BISHOP_SQUARE_TABLE[p1] - BISHOP_SQUARE_TABLE[p0]: BISHOP_SQUARE_TABLE[p0]-BISHOP_VALUE - BISHOP_SQUARE_TABLE[p1];
+                break;
+        }
+    switch (deadpiece & ~PlayerColor::WHITE & ~PlayerColor::BLACK) {
+            case PieceType::PAWN:
+                added -= (deadpiece & PlayerColor::WHITE) ? PAWN_VALUE + PAWN_SQUARE_TABLE[p1] :  -PAWN_VALUE - PAWN_SQUARE_TABLE[p1];
+                break;
+            case PieceType::ROOK:
+                added -= (deadpiece & PlayerColor::WHITE) ? ROOK_VALUE + ROOK_SQUARE_TABLE[p1] : -ROOK_VALUE - ROOK_SQUARE_TABLE[p1];
+                break;
+            case PieceType::KING:
+                added -= (deadpiece & PlayerColor::WHITE) ? KING_VALUE + KING_SQUARE_TABLE[p1] :-KING_VALUE - KING_SQUARE_TABLE[p1];
+                break;
+            case PieceType::BISHOP:
+                added -= (deadpiece & PlayerColor::WHITE) ? BISHOP_VALUE + BISHOP_SQUARE_TABLE[p1]:-BISHOP_VALUE - BISHOP_SQUARE_TABLE[p1];
+                break;
+        }
+return added;
+}
+
 void Board::_do_move(U16 move) {
 
     U8 p0 = getp0(move);
@@ -553,7 +682,8 @@ void Board::_do_move(U16 move) {
             pieces[i] = p1;
         }
     }
-
+    int added_score = this->get_added_score(p0,p1,piecetype,this->data.last_killed_piece,promo);
+    this->data.score += added_score;
     if (promo == PAWN_ROOK) {
         piecetype = (piecetype & (WHITE | BLACK)) | ROOK;
     }

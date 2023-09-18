@@ -63,7 +63,7 @@ struct BoardData {
     PlayerColor player_to_play = WHITE;
     U8 last_killed_piece = 0;
     int last_killed_piece_idx = -1;
-
+    int score = 0;
 };
 
 struct Board {
@@ -77,9 +77,11 @@ struct Board {
     Board* copy() const;
     void do_move(U16 move);
     void undo_move(U16 move);
+    
     private:
     std::unordered_set<U16> _get_pseudolegal_moves() const;
     std::unordered_set<U16> _get_pseudolegal_moves_for_piece(U8 piece_pos) const;
+    int get_added_score(U8 p0,U8 p1,U8 piecetype,U8 deadpiece,U8 promo);
     void _flip_player();
     void _do_move(U16 move);
     bool _under_threat(U8 piece_pos) const;
@@ -87,6 +89,7 @@ struct Board {
     std::unordered_set<U16> _get_pseudolegal_moves_for_side(U8 color) const;
 };
 
+int evaluate(const Board &b);
 std::string move_to_str(U16 move);
 U16 str_to_move(std::string move);
 std::string board_to_str(const U8 *b);

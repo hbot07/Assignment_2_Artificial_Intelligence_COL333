@@ -22,7 +22,7 @@ const short BISHOP_VALUE = 30;
 // Placeholder values for piece square tables.
 const short PAWN_SQUARE_TABLE[64] = {
         0, 0, 0, 0, 0, 0, 0, 0,
-        5, 5, 5, 5, 5, 5, 5, 5,
+        0, 1, 2, 3, 5, 5, 5, 5,
         1, 1, 2, 3, 3, 2, 1, 1,
         0, 0, 1, 2, 2, 1, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0,
@@ -33,12 +33,12 @@ const short PAWN_SQUARE_TABLE[64] = {
 
 const short ROOK_SQUARE_TABLE[64] = {
         0, 0, 0, 0, 0, 0, 0, 0,
-        5, 10, 10, 10, 10, 10, 10, 5,
-        5, 10, 10, 10, 10, 10, 10, 5,
-        5, 10, 10, 10, 10, 10, 10, 5,
-        5, 10, 10, 10, 10, 10, 10, 5,
-        5, 10, 10, 10, 10, 10, 10, 5,
-        5, 10, 10, 10, 10, 10, 10, 5,
+        14, 10, 10, 10, 10, 5, 5, 5,
+        12, 12, 10, 10, 10, 5, 5, 5,
+        11, 11, 10, 10, 10, 5, 5, 5,
+        10, 10, 10, 10, 10, 5, 5, 5,
+        10, 9, 7, 6, 5, 6, 3, 5,
+        8, 7, 6, 5, 4, 5, 5, 5,
         0, 0, 0, 5, 5, 0, 0, 0
 };
 
@@ -54,17 +54,17 @@ const short KING_SQUARE_TABLE[64] = {
 };
 
 const short BISHOP_SQUARE_TABLE[64] = {
-        0, 0, 0, 0, 0, 0, 0, 0,
-        5, 10, 10, 10, 10, 10, 10, 5,
-        5, 10, 10, 10, 10, 10, 10, 5,
-        5, 10, 10, 10, 10, 10, 10, 5,
-        5, 10, 10, 10, 10, 10, 10, 5,
-        5, 10, 10, 10, 10, 10, 10, 5,
-        5, 10, 10, 10, 10, 10, 10, 5,
+        10, 10, 4, 4, 4, 6, 7, 0,
+        10, 10, 10, 10, 10, 3, 4, 5,
+        10, 10, 10, 10, 10, 3, 4, 5,
+        10, 10, 10, 10, 10, 3, 4, 5,
+        10, 10, 10, 10, 10, 3, 4, 5,
+        10, 10, 7, 6, 5, 4, 3, 4,
+        10, 10, 10, 10, 10, 3, 4, 5,
         0, 0, 0, 5, 5, 0, 0, 0
 };
 
-int evaluate(const Board &b) {
+/*int evaluate(const Board &b) {
     int score = 0;
 
     // Material count
@@ -102,32 +102,34 @@ int evaluate(const Board &b) {
 
     return score;
 }
-
+*/
 
 
 // The recursive minimax function with alpha-beta pruning
 int Engine::minimax(const Board &b, int depth, bool isMaximizingPlayer, int alpha, int beta) {
     if (depth == 0 ) {
+        std::cout << "score from board"<< b.data.score << "\n";
+        std::cout  << "actual score"<< evaluate(b)<<"\n";
         return evaluate(b);
     }
-    Board newBoard = *b.copy();
+  //  Board newBoard = *b.copy();
 
     auto moves = b.get_legal_moves();
    std::vector<U16> moveset;
     for(auto m:moves){
         moveset.push_back(m);
     }
-    auto rng = std::default_random_engine {};
-    std::shuffle(std::begin(moveset), std::end(moveset), rng);
+   std::srand(time(NULL));
+    std::random_shuffle(std::begin(moveset), std::end(moveset));
     if (isMaximizingPlayer) {
         int maxEval = NEG_INF;
         for (long unsigned int i = 0;i < moveset.size();i++) {
-           //Board newBoard = *b.copy();
+            Board newBoard = *b.copy();
             newBoard.do_move(moveset[i]);
             int eval = minimax(newBoard, depth - 1, false, alpha, beta);
             maxEval = std::max(maxEval, eval);
             alpha = std::max(alpha, eval);
-            newBoard.undo_move(moveset[i]);
+           // newBoard.undo_move(moveset[i]);
             if (beta <= alpha) {
                 break;  // beta cutoff
             }
@@ -136,12 +138,12 @@ int Engine::minimax(const Board &b, int depth, bool isMaximizingPlayer, int alph
     } else {
         int minEval = INF;
         for (long unsigned int i =0;i < moveset.size();i++) {
-            //Board newBoard = *b.copy();
+            Board newBoard = *b.copy();
             newBoard.do_move(moveset[i]);
             int eval = minimax(newBoard, depth - 1, true, alpha, beta);
             minEval = std::min(minEval, eval);
             beta = std::min(beta, eval);
-            newBoard.undo_move(moveset[i]);
+           // newBoard.undo_move(moveset[i]);
             if (beta <= alpha) {
                 break;  // alpha cutoff
             }
@@ -161,8 +163,8 @@ void Engine::find_best_move(const Board& b) {
     for(auto m:moves){
         moveset.push_back(m);
     }
-    auto rng = std::default_random_engine {};
-    std::shuffle(std::begin(moveset), std::end(moveset), rng);
+    std::srand(time(NULL));
+    std::random_shuffle(std::begin(moveset), std::end(moveset));
     int bestValue;
     // Minimax initialization
     bool is_white = false;
@@ -171,9 +173,10 @@ void Engine::find_best_move(const Board& b) {
     bestValue = NEG_INF;}
     else{bestValue = INF;}
     U16 bestMove = 0;
-    Board newBoard = *b.copy();
+
 
     for (long unsigned int i = 0;i < moveset.size();i++) {
+        Board newBoard = *b.copy();
         newBoard.do_move(moveset[i]);
         
         if (is_white){
@@ -189,8 +192,7 @@ void Engine::find_best_move(const Board& b) {
             bestMove = moveset[i];
         }   
         }
-        newBoard.undo_move(moveset[i]);
     }
-
+ 
     this->best_move = bestMove;
 }
