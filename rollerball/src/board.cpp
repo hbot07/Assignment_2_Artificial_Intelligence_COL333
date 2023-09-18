@@ -523,7 +523,10 @@ void Board::do_move(U16 move) {
     _do_move(move);
     _flip_player();
 }
-
+void Board::undo_move(U16 move){
+    _undo_last_move(move);
+    _flip_player();
+}
 void Board::_flip_player() {
     this->data.player_to_play = (PlayerColor)(this->data.player_to_play ^ (WHITE | BLACK));
 }

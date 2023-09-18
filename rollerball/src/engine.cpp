@@ -12,15 +12,15 @@ const int NEG_INF = -INF;
 // Define a helper function to evaluate the board
 // NOTE: This is a dummy function and should be replaced with an appropriate evaluation function for your game.
 // Piece values
-const int PAWN_VALUE   = 10;
-const int ROOK_VALUE   = 50;
-const int KING_VALUE   = 900; // This might be arbitrary since the game is over if the King is captured, but for evaluation purposes, it has a high value.
-const int BISHOP_VALUE = 30;
+const short PAWN_VALUE   = 10;
+const short ROOK_VALUE   = 50;
+const short KING_VALUE   = 900; // This might be arbitrary since the game is over if the King is captured, but for evaluation purposes, it has a high value.
+const short BISHOP_VALUE = 30;
 
 // Piece square tables
 // Note: These are placeholders. For an optimal evaluation, the values inside should be tuned based on the specifics of the game.
 // Placeholder values for piece square tables.
-const int PAWN_SQUARE_TABLE[64] = {
+const short PAWN_SQUARE_TABLE[64] = {
         0, 0, 0, 0, 0, 0, 0, 0,
         5, 5, 5, 5, 5, 5, 5, 5,
         1, 1, 2, 3, 3, 2, 1, 1,
@@ -31,7 +31,7 @@ const int PAWN_SQUARE_TABLE[64] = {
         0, 0, 0, 0, 0, 0, 0, 0
 };
 
-const int ROOK_SQUARE_TABLE[64] = {
+const short ROOK_SQUARE_TABLE[64] = {
         0, 0, 0, 0, 0, 0, 0, 0,
         5, 10, 10, 10, 10, 10, 10, 5,
         5, 10, 10, 10, 10, 10, 10, 5,
@@ -42,7 +42,7 @@ const int ROOK_SQUARE_TABLE[64] = {
         0, 0, 0, 5, 5, 0, 0, 0
 };
 
-const int KING_SQUARE_TABLE[64] = {
+const short KING_SQUARE_TABLE[64] = {
         20, 30, 10, 0, 0, 10, 30, 20,
         20, 20, 0, 0, 0, 0, 20, 20,
         -10, -20, -20, -20, -20, -20, -20, -10,
@@ -53,7 +53,7 @@ const int KING_SQUARE_TABLE[64] = {
         0, 0, 0, 0, 0, 0, 0, 0
 };
 
-const int BISHOP_SQUARE_TABLE[64] = {
+const short BISHOP_SQUARE_TABLE[64] = {
         0, 0, 0, 0, 0, 0, 0, 0,
         5, 10, 10, 10, 10, 10, 10, 5,
         5, 10, 10, 10, 10, 10, 10, 5,
@@ -106,17 +106,19 @@ int Engine::minimax(const Board &b, int depth, bool isMaximizingPlayer, int alph
     if (depth == 0 || search == false) {
         return evaluate(b);
     }
+    Board newBoard = *b.copy();
 
     auto moves = b.get_legal_moves();
 
     if (isMaximizingPlayer) {
         int maxEval = NEG_INF;
         for (auto m : moves) {
-            Board newBoard = *b.copy();
+           //Board newBoard = *b.copy();
             newBoard.do_move(m);
             int eval = minimax(newBoard, depth - 1, false, alpha, beta);
             maxEval = std::max(maxEval, eval);
             alpha = std::max(alpha, eval);
+            newBoard.undo_move(m);
             if (beta <= alpha) {
                 break;  // beta cutoff
             }
@@ -125,11 +127,12 @@ int Engine::minimax(const Board &b, int depth, bool isMaximizingPlayer, int alph
     } else {
         int minEval = INF;
         for (auto m : moves) {
-            Board newBoard = *b.copy();
+            //Board newBoard = *b.copy();
             newBoard.do_move(m);
             int eval = minimax(newBoard, depth - 1, true, alpha, beta);
             minEval = std::min(minEval, eval);
             beta = std::min(beta, eval);
+            newBoard.undo_move(m);
             if (beta <= alpha) {
                 break;  // alpha cutoff
             }
@@ -145,19 +148,33 @@ void Engine::find_best_move(const Board& b) {
         this->best_move = 0;
         return;
     }
-
+    int bestValue;
     // Minimax initialization
-    int bestValue = NEG_INF;
+    bool is_white = false;
+    if (b.data.player_to_play == WHITE){
+    is_white = true;
+    bestValue = NEG_INF;}
+    else{bestValue = INF;}
     U16 bestMove = 0;
+    Board newBoard = *b.copy();
     for (auto m : moves) {
-        Board newBoard = *b.copy();
+       
         newBoard.do_move(m);
+        
+        if (is_white){
         int moveValue = minimax(newBoard, 3, false, NEG_INF, INF);  // assuming depth 3 for now, you can change as needed
-
         if (moveValue > bestValue) {
             bestValue = moveValue;
             bestMove = m;
+        }}
+        else{
+        int moveValue = minimax(newBoard, 3, true, NEG_INF, INF);  // assuming depth 3 for now, you can change as needed
+         if (moveValue < bestValue) {
+            bestValue = moveValue;
+            bestMove = m;
+        }   
         }
+        newBoard.undo_move(m);
     }
 
     this->best_move = bestMove;
