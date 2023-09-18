@@ -114,16 +114,14 @@ int Engine::minimax(const Board &b, int depth, bool isMaximizingPlayer, int alph
 
     auto moves = b.get_legal_moves();
    std::vector<U16> moveset;
-     std::sample(
-            moves.begin(),
-            moves.end(),
-            std::back_inserter(moveset),
-            1,
-            std::mt19937{std::random_device{}()}
-        );
+    for(auto m:moves){
+        moveset.push_back(m);
+    }
+    auto rng = std::default_random_engine {};
+    std::shuffle(std::begin(moveset), std::end(moveset), rng);
     if (isMaximizingPlayer) {
         int maxEval = NEG_INF;
-        for (int i = 0;i < moveset.size();i++) {
+        for (long unsigned int i = 0;i < moveset.size();i++) {
            //Board newBoard = *b.copy();
             newBoard.do_move(moveset[i]);
             int eval = minimax(newBoard, depth - 1, false, alpha, beta);
@@ -137,7 +135,7 @@ int Engine::minimax(const Board &b, int depth, bool isMaximizingPlayer, int alph
         return maxEval;
     } else {
         int minEval = INF;
-        for (int i =0;i < moveset.size();i++) {
+        for (long unsigned int i =0;i < moveset.size();i++) {
             //Board newBoard = *b.copy();
             newBoard.do_move(moveset[i]);
             int eval = minimax(newBoard, depth - 1, true, alpha, beta);
@@ -160,13 +158,11 @@ void Engine::find_best_move(const Board& b) {
         return;
     }
     std::vector<U16> moveset;
-     std::sample(
-            moves.begin(),
-            moves.end(),
-            std::back_inserter(moveset),
-            1,
-            std::mt19937{std::random_device{}()}
-        );
+    for(auto m:moves){
+        moveset.push_back(m);
+    }
+    auto rng = std::default_random_engine {};
+    std::shuffle(std::begin(moveset), std::end(moveset), rng);
     int bestValue;
     // Minimax initialization
     bool is_white = false;
@@ -177,8 +173,7 @@ void Engine::find_best_move(const Board& b) {
     U16 bestMove = 0;
     Board newBoard = *b.copy();
 
-    for (int i = 0;i < moveset.size();i++) {
-       
+    for (long unsigned int i = 0;i < moveset.size();i++) {
         newBoard.do_move(moveset[i]);
         
         if (is_white){
