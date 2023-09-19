@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <random>
 #include <iostream>
+#include <chrono>
 
 #include "board.hpp"
 #include "engine.hpp"
@@ -10,6 +11,7 @@ const int INF = 1e9;
 const int NEG_INF = -INF;
 
 // Define a helper function to evaluate the board
+
 // NOTE: This is a dummy function and should be replaced with an appropriate evaluation function for your game.
 // Piece values
 const short PAWN_VALUE   = 10;
@@ -106,8 +108,18 @@ const short BISHOP_SQUARE_TABLE[64] = {
 
 
 // The recursive minimax function with alpha-beta pruning
+int ply_counter = 0;
+int depth_0 = 0;
+int search_false = 0;
 int Engine::minimax(const Board &b, int depth, bool isMaximizingPlayer, int alpha, int beta) {
-    if (depth == 0 ||search == false ) {
+    if (depth == 0) {
+        depth_0++;
+//        std::cout << ply_counter << " at depth 0\n"<< std::endl;
+        return b.data.score;
+    }
+    if (search == false ) {
+        search_false++;
+//        std::cout << search_false << " search is false\n" << std::endl;
          return b.data.score;
     }
   //  Board newBoard = *b.copy();
@@ -135,7 +147,7 @@ int Engine::minimax(const Board &b, int depth, bool isMaximizingPlayer, int alph
             maxEval = std::max(maxEval, eval);
             alpha = std::max(alpha, eval);
            newBoard.undo_move(movesorted[i].second);
-            if (beta <= alpha||search == false) {
+            if (beta <= alpha) {
                 break;  // beta cutoff
             }
         }
@@ -154,7 +166,7 @@ int Engine::minimax(const Board &b, int depth, bool isMaximizingPlayer, int alph
             minEval = std::min(minEval, eval);
             beta = std::min(beta, eval);
            newBoard.undo_move(movesorted[i].second);
-            if (beta <= alpha||search == false) {
+            if (beta <= alpha) {
                 break;  // alpha cutoff
             }
         }
@@ -163,6 +175,12 @@ int Engine::minimax(const Board &b, int depth, bool isMaximizingPlayer, int alph
 }
 
 void Engine::find_best_move(const Board& b) {
+    auto start = std::chrono::high_resolution_clock::now();
+
+    ply_counter = 0;
+    depth_0 = 0;
+    search_false = 0;
+
     auto moves = b.get_legal_moves();
 
     if (moves.size() == 0) {
@@ -174,42 +192,57 @@ void Engine::find_best_move(const Board& b) {
         moveset.push_back(m);
     }
     std::srand(time(NULL));
-    std::random_shuffle(std::begin(moveset), std::end(moveset));
-    int bestValue;
-    // Minimax initialization
-    bool is_white = false;
-    if (b.data.player_to_play == WHITE){
-    is_white = true;
-    bestValue = NEG_INF;}
-    else{bestValue = INF;}
-    U16 bestMove = 0;
-      Board newBoard  = *(b.copy());
-      std::vector<std::pair<int, U16>> movesorted;
-       for (auto m:moves){
-        newBoard.do_move(m);
-        movesorted.push_back(std::make_pair(-1*(newBoard.data.score),m));
-        newBoard.undo_move(m);
-       }
-    std::sort(movesorted.begin(),movesorted.end());
-
-    for (long unsigned int i = 0;i < movesorted.size();i++) {
-        newBoard.do_move(movesorted[i].second);
-        
-        if (is_white){
-        int moveValue = minimax(newBoard, 3, false, NEG_INF, INF);  // assuming depth 3 for now, you can change as needed
-        if (moveValue > bestValue) {
-            bestValue = moveValue;
-            bestMove = movesorted[i].second;
-        }}
-        else{
-        int moveValue = minimax(newBoard, 3, true, NEG_INF, INF);  // assuming depth 3 for now, you can change as needed
-         if (moveValue < bestValue) {
-            bestValue = moveValue;
-            bestMove = movesorted[i].second;
-        }   
+    std::random_device rd;
+    std::mt19937 g(rd());
+    std::shuffle(std::begin(moveset), std::end(moveset), g);
+    while(search) {
+        int bestValue;
+        // Minimax initialization
+        bool is_white = false;
+        if (b.data.player_to_play == WHITE) {
+            is_white = true;
+            bestValue = NEG_INF;
+        } else { bestValue = INF; }
+        U16 bestMove = 0;
+        Board newBoard = *(b.copy());
+        std::vector<std::pair<int, U16>> movesorted;
+        for (auto m: moves) {
+            newBoard.do_move(m);
+            movesorted.push_back(std::make_pair(-1 * (newBoard.data.score), m));
+            newBoard.undo_move(m);
         }
-        newBoard.undo_move(movesorted[i].second);
+        std::sort(movesorted.begin(), movesorted.end());
+
+        for (long unsigned int i = 0; i < movesorted.size(); i++) {
+            newBoard.do_move(movesorted[i].second);
+
+            if (is_white) {
+                int moveValue = minimax(newBoard, ply_counter, false, NEG_INF,
+                                        INF);  // assuming depth 3 for now, you can change as needed
+                if (moveValue > bestValue) {
+                    bestValue = moveValue;
+                    bestMove = movesorted[i].second;
+                }
+            } else {
+                int moveValue = minimax(newBoard, ply_counter, true, NEG_INF,
+                                        INF);  // assuming depth 3 for now, you can change as needed
+                if (moveValue < bestValue) {
+                    bestValue = moveValue;
+                    bestMove = movesorted[i].second;
+                }
+            }
+            newBoard.undo_move(movesorted[i].second);
+        }
+
+        this->best_move = bestMove;
+        std::cout << "Best move: " << this->best_move << std::endl;
+        ply_counter++;
     }
- 
-    this->best_move = bestMove;
+    auto stop = std::chrono::high_resolution_clock::now();
+
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
+    std::cout << "Time taken by function: " << duration.count() << " ms" << std::endl;
+    std::cout << "Number of ply: " << ply_counter << std::endl;
+    std::cout << "Number of depth 0: " << depth_0 << std::endl;
+    std::cout << "Number of search false: " << search_false << std::endl;
 }
