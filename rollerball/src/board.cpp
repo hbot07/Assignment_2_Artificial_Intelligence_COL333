@@ -657,6 +657,10 @@ int Board::get_added_score(U8 p0,U8 p1,U8 piecetype,U8 deadpiece,U8 promo){
                 added -= (deadpiece & PlayerColor::WHITE) ? BISHOP_VALUE + BISHOP_SQUARE_TABLE[p1]:-BISHOP_VALUE - BISHOP_SQUARE_TABLE[p1];
                 break;
         }
+ if (this->in_check()) {
+        added += (this->data.player_to_play == PlayerColor::WHITE) ? -150 : 150;  // If white is in check, subtract value. If black is in check, add value.
+    }
+
 return added;
 }
 

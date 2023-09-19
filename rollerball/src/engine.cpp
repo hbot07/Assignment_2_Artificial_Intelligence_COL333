@@ -140,7 +140,7 @@ int Engine::minimax(const Board &b, int depth, bool isMaximizingPlayer, int alph
         newBoard.undo_move(m);
        }
        std::sort(movesorted.begin(),movesorted.end());
-        int maxEval = NEG_INF;
+        int maxEval = -700;
         for (long unsigned int i = 0;i < movesorted.size();i++) {
             newBoard.do_move(movesorted[i].second);
             int eval = minimax(newBoard, depth - 1, false, alpha, beta);
@@ -159,7 +159,7 @@ int Engine::minimax(const Board &b, int depth, bool isMaximizingPlayer, int alph
         newBoard.undo_move(m);
        }
        std::sort(movesorted.begin(),movesorted.end());
-        int minEval = INF;
+        int minEval = 700;
         for (long unsigned int i = 0;i < movesorted.size();i++) {
             newBoard.do_move(movesorted[i].second);
             int eval = minimax(newBoard, depth - 1, true, alpha, beta);
