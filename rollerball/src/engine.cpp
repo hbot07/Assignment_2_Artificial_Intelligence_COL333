@@ -80,16 +80,16 @@ int evaluate(const Board &b) {
         U8 piece = b.data.board_0[8*i + j];
         switch (piece & ~PlayerColor::WHITE & ~PlayerColor::BLACK) {
             case PieceType::PAWN:
-                score += (piece & PlayerColor::WHITE) ? PAWN_VALUE + PAWN_SQUARE_TABLE[8*i + j] : -PAWN_VALUE - PAWN_SQUARE_TABLE[8*i + j];
+                score += (piece & PlayerColor::WHITE) ? PAWN_VALUE + PAWN_SQUARE_TABLE[8*i + j] : -PAWN_VALUE - PAWN_SQUARE_TABLE[8*(6-i) +(6- j)];
                 break;
             case PieceType::ROOK:
-                score += (piece & PlayerColor::WHITE) ? ROOK_VALUE + ROOK_SQUARE_TABLE[8*i + j] : -ROOK_VALUE - ROOK_SQUARE_TABLE[8*i +j];
+                score += (piece & PlayerColor::WHITE) ? ROOK_VALUE + ROOK_SQUARE_TABLE[8*i + j] : -ROOK_VALUE - ROOK_SQUARE_TABLE[8*(6-i) +(6-j)];
                 break;
             case PieceType::KING:
-                score += (piece & PlayerColor::WHITE) ? KING_VALUE + KING_SQUARE_TABLE[8*i + j] : -KING_VALUE - KING_SQUARE_TABLE[8*i + j];
+                score += (piece & PlayerColor::WHITE) ? KING_VALUE + KING_SQUARE_TABLE[8*i + j] : -KING_VALUE - KING_SQUARE_TABLE[8*(6-i) + (6-j)];
                 break;
             case PieceType::BISHOP:
-                score += (piece & PlayerColor::WHITE) ? BISHOP_VALUE + BISHOP_SQUARE_TABLE[8*i + j] : -BISHOP_VALUE - BISHOP_SQUARE_TABLE[8*i +j];
+                score += (piece & PlayerColor::WHITE) ? BISHOP_VALUE + BISHOP_SQUARE_TABLE[8*i + j] : -BISHOP_VALUE - BISHOP_SQUARE_TABLE[8*(6-i) +(6-j)];
                 break;
         }}
     }
@@ -117,38 +117,38 @@ int get_added_score(U16 move,const Board &b){
     int added = 0;
     switch (piecetype & ~PlayerColor::WHITE & ~PlayerColor::BLACK) {
             case PieceType::PAWN:
-                added += (piecetype & PlayerColor::WHITE) ? PAWN_SQUARE_TABLE[p1] -  PAWN_SQUARE_TABLE[p0] : PAWN_SQUARE_TABLE[p0] - PAWN_SQUARE_TABLE[p1];
+                added += (piecetype & PlayerColor::WHITE) ? PAWN_SQUARE_TABLE[p1] -  PAWN_SQUARE_TABLE[p0] : PAWN_SQUARE_TABLE[54 - p0] - PAWN_SQUARE_TABLE[54 - p1];
                 if (promo == PAWN_ROOK){
-                     added += (piecetype & PlayerColor::WHITE) ? ROOK_VALUE + ROOK_SQUARE_TABLE[p1]- PAWN_VALUE : -ROOK_VALUE - ROOK_SQUARE_TABLE[p1]+PAWN_VALUE;
+                     added += (piecetype & PlayerColor::WHITE) ? ROOK_VALUE + ROOK_SQUARE_TABLE[p1]- PAWN_VALUE : -ROOK_VALUE - ROOK_SQUARE_TABLE[54 - p1]+PAWN_VALUE;
                      break;
                 } 
                 if(promo == PAWN_BISHOP){
-                    added += (piecetype & PlayerColor::WHITE) ? BISHOP_VALUE + BISHOP_SQUARE_TABLE[p1]- PAWN_VALUE:-BISHOP_VALUE - BISHOP_SQUARE_TABLE[p1]+PAWN_VALUE;
+                    added += (piecetype & PlayerColor::WHITE) ? BISHOP_VALUE + BISHOP_SQUARE_TABLE[p1]- PAWN_VALUE:-BISHOP_VALUE - BISHOP_SQUARE_TABLE[54 - p1]+PAWN_VALUE;
                     break;
                 }
                 break;
             case PieceType::ROOK:
-                added += (piecetype & PlayerColor::WHITE) ? ROOK_SQUARE_TABLE[p1] - ROOK_SQUARE_TABLE[p0]: ROOK_SQUARE_TABLE[p0]- ROOK_SQUARE_TABLE[p1];
+                added += (piecetype & PlayerColor::WHITE) ? ROOK_SQUARE_TABLE[p1] - ROOK_SQUARE_TABLE[p0]: ROOK_SQUARE_TABLE[54 - p0]- ROOK_SQUARE_TABLE[54 - p1];
                 break;
             case PieceType::KING:
-                added += (piecetype & PlayerColor::WHITE) ? KING_SQUARE_TABLE[p1] - KING_SQUARE_TABLE[p0] : KING_SQUARE_TABLE[p0] - KING_SQUARE_TABLE[p1];
+                added += (piecetype & PlayerColor::WHITE) ? KING_SQUARE_TABLE[p1] - KING_SQUARE_TABLE[p0] : KING_SQUARE_TABLE[54 - p0] - KING_SQUARE_TABLE[54 - p1];
                 break;
             case PieceType::BISHOP:
-                added += (piecetype & PlayerColor::WHITE) ?  BISHOP_SQUARE_TABLE[p1] - BISHOP_SQUARE_TABLE[p0]: BISHOP_SQUARE_TABLE[p0] - BISHOP_SQUARE_TABLE[p1];
+                added += (piecetype & PlayerColor::WHITE) ?  BISHOP_SQUARE_TABLE[p1] - BISHOP_SQUARE_TABLE[p0]: BISHOP_SQUARE_TABLE[54 - p0] - BISHOP_SQUARE_TABLE[54 - p1];
                 break;
         }
     switch (deadpiece & ~PlayerColor::WHITE & ~PlayerColor::BLACK) {
             case PieceType::PAWN:
-                added -= (deadpiece & PlayerColor::WHITE) ? PAWN_VALUE + PAWN_SQUARE_TABLE[p1] :  -PAWN_VALUE - PAWN_SQUARE_TABLE[p1];
+                added -= (deadpiece & PlayerColor::WHITE) ? PAWN_VALUE + PAWN_SQUARE_TABLE[p1] :  -PAWN_VALUE - PAWN_SQUARE_TABLE[54 - p1];
                 break;
             case PieceType::ROOK:
-                added -= (deadpiece & PlayerColor::WHITE) ? ROOK_VALUE + ROOK_SQUARE_TABLE[p1] : -ROOK_VALUE - ROOK_SQUARE_TABLE[p1];
+                added -= (deadpiece & PlayerColor::WHITE) ? ROOK_VALUE + ROOK_SQUARE_TABLE[p1] : -ROOK_VALUE - ROOK_SQUARE_TABLE[54-p1];
                 break;
             case PieceType::KING:
-                added -= (deadpiece & PlayerColor::WHITE) ? KING_VALUE + KING_SQUARE_TABLE[p1] :-KING_VALUE - KING_SQUARE_TABLE[p1];
+                added -= (deadpiece & PlayerColor::WHITE) ? KING_VALUE + KING_SQUARE_TABLE[p1] :-KING_VALUE - KING_SQUARE_TABLE[54-p1];
                 break;
             case PieceType::BISHOP:
-                added -= (deadpiece & PlayerColor::WHITE) ? BISHOP_VALUE + BISHOP_SQUARE_TABLE[p1]:-BISHOP_VALUE - BISHOP_SQUARE_TABLE[p1];
+                added -= (deadpiece & PlayerColor::WHITE) ? BISHOP_VALUE + BISHOP_SQUARE_TABLE[p1]:-BISHOP_VALUE - BISHOP_SQUARE_TABLE[54 - p1];
                 break;
         }
  if (b.in_check()) {
@@ -213,7 +213,7 @@ return added;
 int ply_counter = 0;
 int depth_0 = 0;
 int search_false = 0;
-int Engine::minimax(const Board &b, int depth, bool isMaximizingPlayer, int alpha, int beta,int score) {
+int minimax(const Board &b, int depth, bool isMaximizingPlayer, int alpha, int beta,int score) {
     if (depth == 0) {
         depth_0++;
 //        std::cout << ply_counter << " at depth 0\n"<< std::endl;
