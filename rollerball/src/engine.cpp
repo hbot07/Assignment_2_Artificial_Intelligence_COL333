@@ -19,7 +19,7 @@ const int NEG_INF = -INF;
 const short PAWN_VALUE   = 15;
 const short ROOK_VALUE   = 100;
 const short KING_VALUE   = 900; // This might be arbitrary since the game is over if the King is captured, but for evaluation purposes, it has a high value.
-const short BISHOP_VALUE = 40;
+const short BISHOP_VALUE = 55;
 
 // Piece square tables
 // Note: These are placeholders. For an optimal evaluation, the values inside should be tuned based on the specifics of the game.
@@ -87,7 +87,7 @@ const short ROOK_SQUARE_TABLE[64] = {
         16, 11, 10, 10, 10, 5, 5, 5,
         16, 15, 10, 10, 10, 5, 5, 5,
         20,17, 10, 13, 0, 15, 13, 5,
-        15, 12, 6, 5, 0, 4, 5, 5,
+        15, 8, 2, 3, 0, 4, 5, 5,
         0, 0, 0, 5, 5, 0, 0, 0
 };
 
@@ -97,19 +97,19 @@ const short KING_SQUARE_TABLE[64] = {
         -20, 15, -20, -20, -20, 15, -20, -10,
         -30, -10, -20, -20, -20, -20, -30, -10,
         -20, 15, -30, -40, 5, 7, -30, -20,
-        -20, -5, 15, 0, 7, -20, -40, -30,
-        -30, -20, -20, -30, -20, -30, -20, -30,
+        -20, -5, 15, 0, -10, -20, -40, -30,
+        -50, -20, -20, -30, -20, -30, -20, -30,
         0, 0, 0, 0, 0, 0, 0, 0
 };
 
 const short BISHOP_SQUARE_TABLE[64] = {
-        10, 10,10, 20, 10, 6, 7, 0,
-        10, 10, 15, 10, 15, 3, 6, 5,
+        7, 10,10, 25, 10, 6, 7, 0,
+        10, 10, 20, 10, 20, 3, 6, 5,
         10, 15, 10, 10, 10, 15, 4, 5,
         20, 10, 10, 10, 10, 3, 20, 5,
         10, 15, 10, 10, 10, 15, 4, 5,
         10, 10, 15, 6, 15, 15, 3, 4,
-        10, 10, 10, 20, 10, 3, 4, 5,
+        7, 10, 10, 20, 10, 3, 7, 5,
         0, 0, 0, 5, 5, 0, 0, 0
 };
 
@@ -288,7 +288,7 @@ int minimax(const Board &b, int depth, bool isMaximizingPlayer, int alpha, int b
         search_false++;
 //        std::cout << search_false << " search is false\n" << std::endl;
         if (newBoard.in_check()) {
-         check_score = (newBoard.data.player_to_play == PlayerColor::BLACK) ? 180:-180;  // If white is in check, subtract value. If black is in check, add value.
+         check_score = (newBoard.data.player_to_play == PlayerColor::BLACK) ? 150:-150;  // If white is in check, subtract value. If black is in check, add value.
     //      score += check_score;
     //      std::cout << "score from evaluater at leaf" << evaluate(b) << "\n";
     //    std::cout << "score from adder at leaf" << score << "\n";
@@ -317,7 +317,7 @@ int minimax(const Board &b, int depth, bool isMaximizingPlayer, int alpha, int b
         //undo_move(m,newBoard);
        }
        std::sort(movesorted.begin(),movesorted.end());
-        int maxEval = -1600;
+        int maxEval = -2000;
         for (long unsigned int i = 0;i < movesorted.size();i++) {
             //newBoard = *(b.copy());
             newBoard.do_move(movesorted[i].second);
@@ -333,7 +333,17 @@ int minimax(const Board &b, int depth, bool isMaximizingPlayer, int alpha, int b
                 break;  // beta cutoff
             }
         }
-        return (maxEval == -1600)?((is_white)?maxEval - 3*num_moves:maxEval + 3*num_moves):maxEval;
+        if (maxEval == -2000){
+             maxEval += (is_white)? -3*num_moves: 3 *num_moves;
+             if (newBoard.in_check()) {
+             maxEval += (newBoard.data.player_to_play == PlayerColor::BLACK) ? 150:-150;
+        
+        }
+        else{
+            maxEval += 300;
+        }
+        }
+        return maxEval;
     } else {
          for (auto m:moves){
         //newBoard.do_move(m);
@@ -341,7 +351,7 @@ int minimax(const Board &b, int depth, bool isMaximizingPlayer, int alpha, int b
         //undo_move(m,newBoard);
        }
        std::sort(movesorted.begin(),movesorted.end());
-        int minEval = 1600;
+        int minEval = 2000;
         for (long unsigned int i = 0;i < movesorted.size();i++) {
             // newBoard = *(b.copy());
             newBoard.do_move(movesorted[i].second);
@@ -355,7 +365,17 @@ int minimax(const Board &b, int depth, bool isMaximizingPlayer, int alpha, int b
                 break;  // alpha cutoff
             }
         }
-        return (minEval==1600)?((is_white)?minEval - 3*num_moves:minEval + 3*num_moves):minEval;
+      if (minEval == 2000){
+             minEval += (is_white)? -3*num_moves: 3 *num_moves;
+             if (newBoard.in_check()) {
+             minEval += (newBoard.data.player_to_play == PlayerColor::BLACK) ? 150:-150;
+        
+        }
+        else{
+            minEval -= 300;
+        }
+        }
+        return minEval;
     }
 }
 
